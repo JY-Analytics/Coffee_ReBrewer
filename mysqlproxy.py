@@ -110,6 +110,14 @@ class MySQLProxy:
         df2 = pd.read_csv('./Data/philly_reviews_asba.csv')
         df2.to_sql('philly_reviews_asba', self.dbConnection, if_exists='append', index=False)
         self.dbConnection.close()
+    
+    def read_data(self, tb='filtered_philly_reviews', whereStr = ''):
+        """
+        Read data as pandas from database.
+        """
+        resdf = pd.read_sql("select * from " + tb +" " +  whereStr, self.dbConnection);
+        return resdf
+
     def show_database(self):
         """
         show all the tables in the DB
@@ -165,10 +173,12 @@ if __name__ == "__main__":
     proxy.show_database()
     proxy.create_database()
     proxy.show_database()
-    stock_prices = [{"shopid":"test1", "opendate":"1999-08-20", "rate":3}, {"shopid":"test2", "opendate":"1999-09-20", "rate":4}]
-    proxy.add_shop_records(stock_prices)
-    stock_prices2 = pd.DataFrame({"shopid":["test7", "test8"], "opendate":["1999-08-21", "2000-08-01"], "rate":["3","4"]})
-    proxy.add_shop_dataframe(stock_prices2)
-    proxy.print_all_shops()
-    proxy.create_filter_table()
-    proxy.import_philly_reviews()
+    #stock_prices = [{"shopid":"test1", "opendate":"1999-08-20", "rate":3}, {"shopid":"test2", "opendate":"1999-09-20", "rate":4}]
+    #proxy.add_shop_records(stock_prices)
+    #stock_prices2 = pd.DataFrame({"shopid":["test7", "test8"], "opendate":["1999-08-21", "2000-08-01"], "rate":["3","4"]})
+    #proxy.add_shop_dataframe(stock_prices2)
+    #proxy.print_all_shops()
+    #proxy.create_filter_table()
+    #proxy.import_philly_reviews()
+    df1=proxy.read_data(whereStr=" where name = \"Vineyards Cafe\"")
+    print(df1)
