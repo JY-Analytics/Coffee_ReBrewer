@@ -1,4 +1,6 @@
 import pymysql
+from sqlalchemy import create_engine
+import pandas as pd
 
 class MySQLProxy:
     def __init__(self, dbname = 'davdbcoffeerebrewer'):
@@ -13,6 +15,10 @@ class MySQLProxy:
         self.conn = pymysql.connect(host="davdbcoffeerebrewer.c3ruoumhmoer.us-west-1.rds.amazonaws.com", port=3306,
                                     user="admin", password="davdbcoffeerebrewer", db=dbname)
         self.stdb = self.conn.cursor()
+        
+        self.sqlEngine = create_engine('mysql+pymysql://admin:davdbcoffeerebrewer' + 
+                                       '@davdbcoffeerebrewer.c3ruoumhmoer.us-west-1.rds.amazonaws.com/'+dbname, pool_recycle=3600)
+        self.dbConnection = self.sqlEngine.connect()
 
     def create_database(self):
         """
@@ -26,6 +32,84 @@ class MySQLProxy:
         """
         self.stdb.execute(str1)
 
+    def create_filter_table(self):
+        """
+        import the filtered result into the table.
+        """
+        str1 = """CREATE TABLE IF NOT EXISTS filtered_philly_reviews (
+        id integer,
+        business_id varchar(64),
+        name varchar(128),
+        address varchar(128),
+        city varchar(64),
+        state varchar(32),
+        postal_code varchar(32),
+        latitude double,
+        longitude double,
+        stars_x double,
+        review_count integer,
+        is_open boolean,
+        attributes text,
+        categories varchar(32),
+        hours text,
+        review_id varchar(64),
+        user_id varchar(64),
+        stars_y double,
+        useful integer,
+        funny integer,
+        cool integer,
+        review_text text,
+        review_date date,
+        INDEX(name)
+        )
+        """
+        self.stdb.execute(str1)
+
+        str1 = """CREATE TABLE IF NOT EXISTS philly_reviews_asba (
+            id integer,
+            business_id varchar(64),
+            name varchar(128),
+            address varchar(128),
+            city varchar(64),
+            state varchar(32),
+            postal_code varchar(32),
+            latitude double,
+            longitude double,
+            stars_x double,
+            review_count integer,
+            is_open boolean,
+            attributes text,
+            categories varchar(32),
+            hours text,
+            review_id varchar(64),
+            user_id varchar(64),
+            stars_y double,
+            useful integer,
+            funny integer,
+            cool integer,
+            review_text text,
+            review_date date,
+            pss double,
+            positive integer,
+            metric_1 double,
+            metric_2 double,
+            composite_score double,
+            INDEX(name)
+
+        )
+        """
+        self.stdb.execute(str1)
+
+    def import_philly_reviews(self):
+        """
+        import the philly reviews into the db
+        """
+        df = pd.read_csv('./Data/filtered_philly_reviews.csv')
+        df.to_sql("filtered_philly_reviews", self.dbConnection, if_exists="append", index=False)
+
+        df2 = pd.read_csv('./Data/philly_reviews_asba.csv')
+        df2.to_sql('philly_reviews_asba', self.dbConnection, if_exists='append', index=False)
+        self.dbConnection.close()
     def show_database(self):
         """
         show all the tables in the DB
@@ -40,6 +124,11 @@ class MySQLProxy:
         clean all the tables
         """
         self.stdb.execute("DELETE FROM coffeeshops")
+    def add_shop_dataframe(self, df):
+        """
+        exmaple codes to add data frame into db
+        """
+        df.to_sql("coffeeshops", self.dbConnection, if_exists="append", index=False)
 
     def add_shop_records(self, shoplist):
         """
@@ -78,4 +167,8 @@ if __name__ == "__main__":
     proxy.show_database()
     stock_prices = [{"shopid":"test1", "opendate":"1999-08-20", "rate":3}, {"shopid":"test2", "opendate":"1999-09-20", "rate":4}]
     proxy.add_shop_records(stock_prices)
+    stock_prices2 = pd.DataFrame({"shopid":["test7", "test8"], "opendate":["1999-08-21", "2000-08-01"], "rate":["3","4"]})
+    proxy.add_shop_dataframe(stock_prices2)
     proxy.print_all_shops()
+    proxy.create_filter_table()
+    proxy.import_philly_reviews()
