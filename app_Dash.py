@@ -14,24 +14,32 @@ df_reviews = pd.read_csv("Data/philly_reviews_asba.csv")
 df_businesses = df_reviews.iloc[:, 1:15].drop_duplicates()
 
 
-fig2 = go.Figure(data=go.Scattergeo(
-        lon = df_businesses['longitude'],
-        lat = df_businesses['latitude'],
-        text = df_businesses['name'],
-        mode = 'markers',
-        marker_color = df_businesses['stars_x'],
-        ))
+#map_fig = go.Figure(data=go.Scattergeo(
+#        lon = df_businesses['longitude'],
+#        lat = df_businesses['latitude'],
+#        text = df_businesses['name'],
+#        mode = 'markers',
+#        marker_color = df_businesses['stars_x'],
+#        ))
 
-fig2.update_layout(title = 'Coffee Shops in Philadelphia <br>(hover for more info)', 
-    geo=dict(showland=True), autosize=False, width=1200, height=800)
-fig2.update_geos(fitbounds="locations")
+map_fig = px.scatter_mapbox(df_businesses, lat="latitude", lon="longitude", # hover_name="pss", hover_data=["State", "Population"],
+                        color_discrete_sequence=["blue"], zoom=10, height=500)
+
+map_fig.update_layout(mapbox_style="open-street-map")
+#map_fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+#map_fig.update_layout(mapbox_bounds={"west": -180, "east": -50, "south": 20, "north": 90})
+
+
+
+#map_fig.update_layout(title = 'Coffee Shops in Philadelphia <br>(hover for more info)', 
+#    geo=dict(showland=True), autosize=True, width=1000, height=500)
 
 
 app.layout = html.Div([
     html.H1(children='Coffee Re-Brewer', style={'textAlign':'center'}),
     dcc.Dropdown(df_reviews.name.unique(), 'Vineyards Cafe', id='dropdown-selection'),
     dcc.Graph(id='graph-content'),
-    dcc.Graph(figure=fig2)
+    dcc.Graph(figure=map_fig)
 
 ])
 
@@ -41,7 +49,7 @@ app.layout = html.Div([
 )
 def update_graph(value):
     dff = df_reviews[df_reviews.name==value]
-    return px.scatter(dff, x='date', y='pss', color='name', title='Coffee Sentiment over Time')
+    return px.scatter(dff, x='review_date', y='pss', color='name', title='Coffee Sentiment over Time')
 
 if __name__ == '__main__':
     app.run(debug=True)
