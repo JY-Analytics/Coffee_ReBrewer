@@ -10,6 +10,7 @@ json
 numpy
 datetime
 tqdm
+protobuf
 
 # used in front-end 
 pandas
