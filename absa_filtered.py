@@ -9,6 +9,7 @@ import torch
 class absaFilter(object):
     def __init__(self):
         self.reviews = None
+        self.review_rates = None
         self.coffee_keywords = ['coffee', 'espresso', 'latte', 'macchiato',
                                 'flat white', 'pour over', 'cappuccino',
                                 'cold brew', 'cortado','mocha','americano']
@@ -82,10 +83,21 @@ class absaFilter(object):
         # Group by business and calculate the positive sentiment ratio (Metric 2)
         metric_2 = self.reviews.groupby('business_id')['positive'].mean().reset_index()
         metric_2.columns = ['business_id', 'metric_2']
+
+        metrics_stars_x = self.reviews.groupby('business_id')['stars_x'].mean().reset_index()
+        metrics_stars_x.columns = ['business_id', 'stars']
+
+        metrics_stars_y = self.reviews.groupby('business_id')['stars_y'].mean().reset_index()
+        metrics_stars_y.columns = ['business_id', 'recent_stars']
+
         # Merge metric_1 and metric_2 with the main DataFrame
         self.reviews = pd.merge(self.reviews, metric_1, on='business_id')
         self.reviews = pd.merge(self.reviews, metric_2, on='business_id')
         self.reviews['composite_score'] = 0.6 * self.reviews['metric_1'] + 0.4 * self.reviews['metric_2']
+
+        self.review_rates = pd.merge(metric_1, metric_2, on='business_id')
+        self.review_rates = pd.merge(self.review_rates, metrics_stars_x, on='business_id')
+        self.review_rates = pd.merge(self.review_rates, metrics_stars_y, on='business_id')
 
 
     def calcTop10(self):
@@ -111,6 +123,7 @@ if __name__ == "__main__":
     top10 = absaF.calcTop10()
 
     absaF.reviews.to_csv('philly_reviews_asba.csv')
+    absaF.review_rates.to_csv('philly_reviews_rates.csv')
     top10.to_csv('top_10_coffee_shops.csv')
 
 

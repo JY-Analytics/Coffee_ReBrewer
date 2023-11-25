@@ -84,3 +84,4 @@ if __name__ == "__main__":
     yd.cleanBusiness()
     yd.cleanReview()
     yd.reviews.to_csv('filtered_philly_reviews.csv')
+    yd.business.to_csv('business_info.csv')

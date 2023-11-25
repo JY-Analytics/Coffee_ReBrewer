@@ -36,6 +36,27 @@ class MySQLProxy:
         """
         import the filtered result into the table.
         """
+        str0 = """
+            CREATE TABLE IF NOT EXISTS business_info (
+            id integer,
+            business_id varchar(64),
+            name varchar(128),
+            address varchar(128),
+            city varchar(64),
+            state varchar(32),
+            postal_code varchar(32),
+            latitude double,
+            longitude double,
+            stars double,
+            review_count integer,
+            is_open boolean,
+            attributes text,
+            categories varchar(32),
+            hours text,
+            INDEX(name)
+            )
+        """
+        self.stdb.execute(str0)
         str1 = """CREATE TABLE IF NOT EXISTS filtered_philly_reviews (
         id integer,
         business_id varchar(64),
@@ -100,6 +121,18 @@ class MySQLProxy:
         """
         self.stdb.execute(str1)
 
+        str1 = """CREATE TABLE IF NOT EXISTS philly_shop_asba (
+            id integer,
+            business_id varchar(64),
+            metric_1 double,
+            metric_2 double,
+            stars double,
+            recent_stars double,
+            INDEX(business_id)
+            )
+        """
+        self.stdb.execute(str1)
+
     def import_philly_reviews(self):
         """
         import the philly reviews into the db
@@ -109,7 +142,18 @@ class MySQLProxy:
 
         df2 = pd.read_csv('./Data/philly_reviews_asba.csv')
         df2.to_sql('philly_reviews_asba', self.dbConnection, if_exists='append', index=False)
+
+        df3 = pd.read_csv('./Data/business_info.csv')
+        df3.rename(columns={"Unnamed: 0":"id"}, inplace=True)
+        print(df3.head(5))
+        df3.to_sql('business_info', self.dbConnection, if_exists='append', index=False)
+
+        df4 = pd.read_csv('./Data/philly_reviews_rates.csv')
+        df4.rename(columns={"Unnamed: 0":"id"}, inplace=True)
+        df4.to_sql('philly_shop_asba', self.dbConnection, if_exists='append', index=False )
+
         self.dbConnection.close()
+
     
     def read_data(self, tb='filtered_philly_reviews', whereStr = ''):
         """
@@ -132,6 +176,10 @@ class MySQLProxy:
         clean all the tables
         """
         self.stdb.execute("DELETE FROM coffeeshops")
+        self.stdb.execute("DELETE FROM filtered_philly_reviews")
+        self.stdb.execute("DELETE FROM philly_reviews_asba")
+        self.stdb.execute('DELETE FROM philly_shop_asba')
+        self.stdb.execute('DELETE FROM business_info')
     def add_shop_dataframe(self, df):
         """
         exmaple codes to add data frame into db
@@ -173,12 +221,8 @@ if __name__ == "__main__":
     proxy.show_database()
     proxy.create_database()
     proxy.show_database()
-    #stock_prices = [{"shopid":"test1", "opendate":"1999-08-20", "rate":3}, {"shopid":"test2", "opendate":"1999-09-20", "rate":4}]
-    #proxy.add_shop_records(stock_prices)
-    #stock_prices2 = pd.DataFrame({"shopid":["test7", "test8"], "opendate":["1999-08-21", "2000-08-01"], "rate":["3","4"]})
-    #proxy.add_shop_dataframe(stock_prices2)
-    #proxy.print_all_shops()
-    #proxy.create_filter_table()
-    #proxy.import_philly_reviews()
-    df1=proxy.read_data(whereStr=" where name = \"Vineyards Cafe\"")
-    print(df1)
+    #proxy.clean_database()
+    proxy.create_filter_table()
+    proxy.import_philly_reviews()
+    #df1=proxy.read_data(whereStr=" where name = \"Vineyards Cafe\"")
+    #print(df1)
