@@ -10,6 +10,8 @@ class YelpDataSet(object):
     def __init__(self):
         self.business = None
         self.reviews = None
+        self.review_total_counts = 0
+        self.business_total_counts = 0
 
     def loadBusinessDataSet(self, file_path = './Data/yelp_dataset/yelp_academic_dataset_business.json'):
 
@@ -19,6 +21,7 @@ class YelpDataSet(object):
         for chunk in chunks:
             self.business = pd.concat([self.business, chunk])
         print(self.business.columns)
+        self.business_total_counts = self.business.shape[0]
 
     def loadReviews(self, review_file_path = './Data/yelp_dataset/yelp_academic_dataset_review.json'):
 
@@ -28,7 +31,7 @@ class YelpDataSet(object):
         self.reviews = pd.DataFrame()
         for chunk in chunks:
             self.reviews = pd.concat([self.reviews, chunk])
-
+        self.review_total_counts = self.reviews.shape[0]
 
     def cleanBusiness(self):
         # drop rows that don't have categories
@@ -81,7 +84,10 @@ if __name__ == "__main__":
     print(yd.business.head(5))
     yd.loadReviews()
     print(yd.reviews.columns)
+    print("total business:", yd.business_total_counts)
+    print("total reviews:", yd.review_total_counts)
     yd.cleanBusiness()
     yd.cleanReview()
     yd.reviews.to_csv('filtered_philly_reviews.csv')
     yd.business.to_csv('business_info.csv')
+
