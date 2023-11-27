@@ -11,7 +11,7 @@ numpy
 datetime
 tqdm
 protobuf
-
+scikit-learn
 # used in front-end 
 pandas
 plotly
