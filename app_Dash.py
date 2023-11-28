@@ -3,21 +3,27 @@ import plotly
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import Dash, html, dcc, callback, Output, Input, dash_table
-
+import mysqlproxy
 
 app = Dash(__name__)
 
 
 # Load and format the data -------------------------------------------------------------
 
-df_reviews = pd.read_csv("Data/philly_reviews_asba.csv")
-df_businesses = df_reviews.iloc[:, 1:15].drop_duplicates()
+# df_reviews = pd.read_csv("Data/philly_reviews_asba.csv")
+myDB = mysqlproxy.MySQLProxy()
+df_reviews = myDB.read_data('philly_reviews_asba')
+#df_businesses = df_reviews.iloc[:, 1:15].drop_duplicates()
+df_businesses = myDB.read_data('business_info').drop_duplicates()
+#print(df_businesses.shape)
+#print(df_businesses1.shape)
+#print(df_reviews.shape)
 df_top10 = pd.read_csv("Data/top_10_coffee_shops.csv")
 bi_grams_results = pd.read_csv('Data/top_10_bigrams.csv')
 bi_grams_results = bi_grams_results.iloc[:, 1:]
 # join the composite (average) sentiment for each business
 df_temporary = df_reviews[['business_id', 'pss']].groupby('business_id').mean().reset_index()
-df_businesses = pd.merge(df_businesses, df_temporary[['business_id','pss']],on='business_id', how='left')
+df_businesses = pd.merge(df_businesses, df_temporary[['business_id','pss']],on='business_id', how='inner')
 
 # -----------------------------------------------------------------------------------------
 

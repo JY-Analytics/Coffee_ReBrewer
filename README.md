@@ -20,6 +20,26 @@ To run the minimal version on a local server, complete the following steps:
 3. Open the command prompt or terminal from the repository and run the following command to execute the Dash app: "python3 app_Dash.py"
 4. Open the browser and navigate to the port where the app is running (provided by the terminal).
 
+To get the original yelp dataset
+1. Download the yelp data from https://www.yelp.com/dataset/download
+2. Unzip the files and put it under ./Data/yelp_dataset.
+
+To run the Data Clean and Data Filter after unzip the yelp data set:
+1. Data Clean: python3 dataClean.py 
+Notes: This will generate the cleanup data into the same folder of the source file, not the ./Data folder
+2. Data Filter: python3 abas_filtered.py
+Notes: This will generate the filtered data into a csv file as well as the sentiment data in the file
+
+Data Ingestion:
+1. Currently we are using the mysql on AWS and it's hard coded. 
+2. You can easily create an empty database and update the db server location in the mysqlproxy.py
+3. Run: python3 mysqlproxy.py will create the tables and ingest the data into the database.
+
+Model Evaluation
+1. The model evaluation is done in modelTuner.py
+2. Run python3 modelTuner.py, you can get the accuracy result on the terminal
+
+
 To run the remote-server version, complete the following steps:
 
 1. **TODO: add the remote-server setup instructions or refer to the word document and add it to the git repo**
