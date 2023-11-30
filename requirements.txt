@@ -16,6 +16,6 @@ scikit-learn
 pandas
 plotly
 dash
-
+dash_bootstrap_components
 
 
