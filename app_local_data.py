@@ -1,20 +1,25 @@
+import textwrap
+
 import pandas as pd
 import plotly
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import Dash, html, dcc, callback, Output, Input, dash_table
-import mysqlproxy
+#import mysqlproxy
+import dash_bootstrap_components as dbc
 
-app = Dash(__name__)
+external_stylesheets = [dbc.themes.BOOTSTRAP]
+app = Dash(__name__, external_stylesheets=external_stylesheets)
 
 
 # Load and format the data -------------------------------------------------------------
 
-# df_reviews = pd.read_csv("Data/philly_reviews_asba.csv")
-myDB = mysqlproxy.MySQLProxy()
-df_reviews = myDB.read_data('philly_reviews_asba')
-#df_businesses = df_reviews.iloc[:, 1:15].drop_duplicates()
-df_businesses = myDB.read_data('business_info').drop_duplicates()
+df_reviews = pd.read_csv("Data/philly_reviews_asba.csv")
+#myDB = mysqlproxy.MySQLProxy()
+#df_reviews = myDB.read_data('philly_reviews_asba')
+df_reviews.review_text = df_reviews.review_text.apply(lambda txt: '<br>'.join(textwrap.wrap(txt, width=50)))
+df_businesses = df_reviews.iloc[:, 1:15].drop_duplicates()
+#df_businesses = myDB.read_data('business_info').drop_duplicates()
 #print(df_businesses.shape)
 #print(df_businesses1.shape)
 #print(df_reviews.shape)
@@ -40,8 +45,8 @@ map_fig = px.scatter_mapbox(df_businesses, lat = 'latitude', lon = 'longitude',
                         color = 'pss', # color based on avg of sentiment scores
                         color_continuous_scale = 'tealrose_r',
                         opacity=1,
-                        width=1000,
-                        height=500,
+                        # width=1000,
+                        # height=500,
                         hover_name='name',
                         hover_data= {
                             #"size": False,   
@@ -50,38 +55,47 @@ map_fig = px.scatter_mapbox(df_businesses, lat = 'latitude', lon = 'longitude',
                             "address": True,
                             #"attributes": True
                         },
-                        labels={'pss': 'avg positive sentiment'}
+                        labels={'pss': 'score'}
                         )
 
 
 # app layout including other visualizations
 app.layout = html.Div([
-    html.H1(children='Coffee Re-Brewer', style={'textAlign':'center'}),
-
-    html.Div([
-
-        html.Div([
+    dbc.Row(dbc.Col(html.H1(children='Coffee Re-Brewer', style={'textAlign':'center'}))),
+    dbc.Row(
+        [
+          dbc.Col(html.Div([
             html.H2(children='Top 10 Coffee Shops by Sentiment Analysis'),
             # The top 10 coffee shops
-            dash_table.DataTable(df_top10.to_dict('records'), [{"name": i, "id": i} for i in df_top10[['name', 'composite_score']]])
-            ], style={'width': '30%', 'float': 'left', 'margin-right': '5%', 'margin-top': '0%'}),
+            dbc.Table.from_dataframe(df_top10[["name", "composite_score"]], striped=True,
+                                     bordered=True, hover=True)
+             # dash_table.DataTable(df_top10.to_dict('records'), [{"name": i, "id": i} for i in df_top10[['name', 'composite_score']]]),
+            ]), width=4
 
-        html.Div([
-            html.H2(children='The Landscape of Coffee Quality'),
+              #, style={'width': '30%', 'float': 'left', 'margin-right': '2%', 'margin-top': '0%'})),
+              ),
+
+          dbc.Col(html.Div([
+             html.H2(children='The Landscape of Coffee Quality'),
                 # put the geo-map in the html structure
                 dcc.Graph(figure=map_fig)
-            ], style={'width': '55%', 'float': 'right', 'margin-left': '5%', 'margin-top': '0%'}),
+            ]), width=8
+              #, style={'width': '60%', 'float': 'right', 'margin-left': '5%', 'margin-top': '0%'}
+            ),
+        ]
+    ),
+    #], style={'width': '65%', 'float': 'left'}),
 
-    ], style={'width': '65%', 'float': 'left'}),
-
-
-    html.Div([
-        html.H2(children='Coffee Sentiment Over Time'),
+    dbc.Row(
+        html.Div([
+            html.H2(children='Coffee Sentiment Over Time'),
         # dropdown of sentiment over time -- see update_graph() below
-        dcc.Dropdown(df_reviews.name.unique(), 'Vineyards Cafe', id='dropdown-selection'),
-        dcc.Graph(id='graph-content'),
-        ], style={'width': '65%', 'float': 'left'}),
-])
+            dcc.Dropdown(df_reviews.name.unique(), 'Vineyards Cafe', id='dropdown-selection'),
+            dcc.Graph(id='graph-content'),
+            ], style={'width': '65%', 'float': 'left'})
+    ),
+    ]
+)
 
 @callback(
     Output('graph-content', 'figure'),
@@ -92,7 +106,7 @@ def update_graph(value):
     return px.scatter(dff, x='review_date', y='pss', color=dff['pss'], color_continuous_scale='tealrose_r',#['red', 'green'],
                       hover_name='review_text', facet_col_wrap=30,
                       size = [30]*len(dff),
-                      labels={'review_date':'date of customer review', 'pss': 'coffee sentiment score'}
+                      labels={'review_date':'date of customer review', 'pss': 'score'}
                       )
 
 if __name__ == '__main__':
