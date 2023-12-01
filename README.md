@@ -40,11 +40,6 @@ Model Evaluation
 2. Run python3 modelTuner.py, you can get the accuracy result on the terminal
 
 
-To run the remote-server version, complete the following steps:
-
-1. **TODO: add the remote-server setup instructions or refer to the word document and add it to the git repo**
-
-
 
 ## Execution
 
